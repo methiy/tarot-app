@@ -174,6 +174,14 @@ const positionLabels: Record<string, string> = {
   flex-direction: column;
   align-items: center;
   gap: var(--space-sm);
+  width: 180px;
+  height: 290px;
+}
+
+.reading-result__card-wrapper > :deep(.card-face) {
+  width: 180px;
+  height: 270px;
+  flex-shrink: 0;
 }
 
 .reading-result__position-label {
@@ -300,7 +308,12 @@ const positionLabels: Record<string, string> = {
     padding: var(--space-lg);
   }
 
-  .reading-result__cards :deep(.card-face) {
+  .reading-result__card-wrapper {
+    width: 140px;
+    height: 230px;
+  }
+
+  .reading-result__card-wrapper > :deep(.card-face) {
     width: 140px;
     height: 210px;
   }
