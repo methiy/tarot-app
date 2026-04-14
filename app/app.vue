@@ -1,6 +1,9 @@
+<script setup>
+const { currentTheme } = useTheme()
+</script>
+
 <template>
-  <div>
-    <NuxtRouteAnnouncer />
-    <NuxtWelcome />
+  <div :data-theme="currentTheme">
+    <NuxtPage />
   </div>
 </template>

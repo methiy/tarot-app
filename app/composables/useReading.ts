@@ -1,93 +1,93 @@
-import type { DrawnCard, ZodiacSign, QuestionCategory } from '~/types'
-import { spreadTemplates, threeCardNarratives } from '~/data/spread-templates'
+import type { DrawnCard, QuestionCategory } from '~/types'
+import type { ZodiacSign } from '~/data/zodiac'
+import { categoryKeywords } from '~/data/keywords'
+import { spreadTemplates } from '~/data/spreadTemplates'
 
 export function useReading() {
-  const loveKeywords = ['爱', '恋', '感情', '对象', '暧昧', '分手', '复合', '婚', '伴侣', '喜欢', '心动', '缘分', 'love', 'relationship']
-  const careerKeywords = ['工作', '事业', '升职', '跳槽', '面试', '薪', '职业', '公司', '项目', '考试', '学业', 'career', 'job', 'work']
-  const healthKeywords = ['健康', '身体', '病', '医', '运动', '睡眠', '压力', '焦虑', '减肥', 'health', 'sick']
-
   function classifyQuestion(question: string): QuestionCategory {
     const q = question.toLowerCase()
-    if (loveKeywords.some(k => q.includes(k))) return 'love'
-    if (careerKeywords.some(k => q.includes(k))) return 'career'
-    if (healthKeywords.some(k => q.includes(k))) return 'health'
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(k => q.includes(k))) return category as QuestionCategory
+    }
     return 'general'
   }
 
   function getCardMeaning(drawn: DrawnCard, category: QuestionCategory): string {
     const direction = drawn.isReversed ? 'reversed' : 'upright'
-    return drawn.card.meanings[category][direction]
+    const meanings = drawn.card.meanings as Record<string, { upright: string; reversed: string }>
+    return meanings[category]?.[direction] ?? meanings.general[direction]
   }
 
-  function getDirectionLabel(isReversed: boolean): string {
-    return isReversed ? '逆位' : '正位'
-  }
-
-  function getZodiacNote(drawn: DrawnCard | DrawnCard[], zodiac: ZodiacSign | null): string {
-    if (!zodiac) return ''
-
-    const cards = Array.isArray(drawn) ? drawn : [drawn]
-    const resonanceCard = cards.find(c => c.card.zodiacLink === zodiac.name)
-
-    if (resonanceCard) {
-      return `✨ 命运共鸣：${resonanceCard.card.nameZh}与你的星座${zodiac.symbol}${zodiac.name}产生了深层共鸣！${zodiac.tarotAdvice}`
-    }
-
-    return zodiac.tarotAdvice
+  function getKeywords(drawn: DrawnCard): string {
+    const kw = drawn.isReversed ? drawn.card.keywords.reversed : drawn.card.keywords.upright
+    return kw.join('、')
   }
 
   function generateSingleReading(
     card: DrawnCard,
     category: QuestionCategory,
     zodiac: ZodiacSign | null,
-  ): { cardReading: string; zodiacNote: string } {
-    const direction = getDirectionLabel(card.isReversed)
+  ) {
+    const direction = card.isReversed ? '逆位' : '正位'
     const meaning = getCardMeaning(card, category)
-    const keywords = card.card.keywords.join('、')
+    const keywords = getKeywords(card)
 
-    const cardReading = `【${card.card.nameZh} · ${direction}】\n\n` +
-      `关键词：${keywords}\n\n` +
-      `${meaning}`
+    let zodiacNote = ''
+    if (zodiac) {
+      if (card.card.zodiacLink === zodiac.name) {
+        zodiacNote = `✨ 命运共鸣：${card.card.name}与你的星座${zodiac.symbol}${zodiac.name}产生了深层共鸣！作为${zodiac.name}，你${zodiac.traits.slice(0, 2).join('、')}的特质将在此次指引中发挥重要作用。`
+      } else {
+        zodiacNote = `${zodiac.symbol} 作为${zodiac.name}，你${zodiac.traits.slice(0, 2).join('、')}的天性会影响你对这张牌的感悟。`
+      }
+    }
 
-    const zodiacNote = getZodiacNote(card, zodiac)
-
-    return { cardReading, zodiacNote }
+    return {
+      cardName: card.card.name,
+      cardNameEn: card.card.nameEn,
+      direction,
+      keywords,
+      meaning,
+      zodiacNote,
+    }
   }
 
   function generateThreeCardReading(
     cards: DrawnCard[],
     category: QuestionCategory,
     zodiac: ZodiacSign | null,
-  ): {
-    cardReadings: { position: string; reading: string }[]
-    synthesis: string
-    advice: string
-    zodiacNote: string
-  } {
-    const cardReadings = cards.map((drawn, index) => {
-      const template = spreadTemplates[index]
-      const direction = getDirectionLabel(drawn.isReversed)
-      const meaning = getCardMeaning(drawn, category)
-      const keywords = drawn.card.keywords.join('、')
+  ) {
+    const positionLabels: Record<string, string> = {
+      past: '过去',
+      present: '现在',
+      future: '未来',
+    }
 
-      const reading =
-        `【${template.labelZh}：${drawn.card.nameZh} · ${direction}】\n` +
-        `${template.description}\n\n` +
-        `关键词：${keywords}\n\n` +
-        `${meaning}`
+    const cardReadings = cards.map((drawn) => ({
+      position: positionLabels[drawn.position ?? 'present'],
+      cardName: drawn.card.name,
+      cardNameEn: drawn.card.nameEn,
+      direction: drawn.isReversed ? '逆位' : '正位',
+      keywords: getKeywords(drawn),
+      meaning: getCardMeaning(drawn, category),
+    }))
 
-      return {
-        position: template.labelZh,
-        reading,
+    // Find matching spread template
+    const pattern = cards.map(c => c.isReversed ? 'reversed' : 'upright').join('-')
+    const template = spreadTemplates.find(t => t.pattern === pattern) ?? spreadTemplates[0]
+
+    const synthesis = `${template.opening}${template.transition}${template.conclusion}`
+
+    let zodiacNote = ''
+    if (zodiac) {
+      const resonance = cards.find(c => c.card.zodiacLink === zodiac.name)
+      if (resonance) {
+        zodiacNote = `✨ 命运共鸣：${resonance.card.name}与你的星座${zodiac.symbol}${zodiac.name}产生了深层共鸣！这张牌在本次占卜中的指引对你尤为重要。`
+      } else {
+        zodiacNote = `${zodiac.symbol} 作为${zodiac.name}，你${zodiac.traits.slice(0, 2).join('、')}的特质为这次占卜增添了独特的色彩。`
       }
-    })
+    }
 
-    const narrative = threeCardNarratives[category]
-    const synthesis = narrative.synthesis
-    const advice = narrative.advice
-    const zodiacNote = getZodiacNote(cards, zodiac)
-
-    return { cardReadings, synthesis, advice, zodiacNote }
+    return { cardReadings, synthesis, zodiacNote }
   }
 
   return { classifyQuestion, generateSingleReading, generateThreeCardReading }

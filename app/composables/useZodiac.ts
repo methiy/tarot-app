@@ -1,4 +1,4 @@
-import type { ZodiacSign } from '~/types'
+import type { ZodiacSign } from '~/data/zodiac'
 import { zodiacSigns } from '~/data/zodiac'
 
 export function useZodiac() {
@@ -10,28 +10,18 @@ export function useZodiac() {
 
     const month = parseInt(parts[1], 10)
     const day = parseInt(parts[2], 10)
-
     if (isNaN(month) || isNaN(day)) return null
 
-    for (const sign of zodiacSigns) {
-      const { startMonth, startDay, endMonth, endDay } = sign.dateRange
+    const mmdd = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
-      // Handle year-crossing sign (Capricorn: Dec 22 - Jan 19)
-      if (startMonth > endMonth) {
-        if (
-          (month === startMonth && day >= startDay) ||
-          (month === endMonth && day <= endDay)
-        ) {
-          return sign
-        }
+    for (const sign of zodiacSigns) {
+      const [start, end] = sign.dateRange
+
+      // Handle year-crossing (Capricorn: 12-22 ~ 01-19)
+      if (start > end) {
+        if (mmdd >= start || mmdd <= end) return sign
       } else {
-        if (
-          (month === startMonth && day >= startDay) ||
-          (month === endMonth && day <= endDay) ||
-          (month > startMonth && month < endMonth)
-        ) {
-          return sign
-        }
+        if (mmdd >= start && mmdd <= end) return sign
       }
     }
 
