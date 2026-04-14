@@ -15,10 +15,10 @@ const totalToSelect = computed(() => props.spreadType === 'single' ? 1 : 3)
 const selectedIndices = ref<number[]>([])
 const revealedCards = ref<DrawnCard[]>([])
 const phase = ref<'selecting' | 'revealing'>('selecting')
+const hoveredIndex = ref(-1)
+const cardRefs = ref<Map<number, HTMLElement>>(new Map())
 
-// Generate a shuffled deck of card indices for display
-const DISPLAY_COUNT = 22 // Show 22 cards in the fan
-const shuffledDeck = ref<TarotCard[]>([])
+const DISPLAY_COUNT = 22
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -29,9 +29,9 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+const shuffledDeck = ref<TarotCard[]>([])
 onMounted(() => {
-  const allCards = [...majorArcana, ...minorArcana]
-  shuffledDeck.value = shuffle(allCards).slice(0, DISPLAY_COUNT)
+  shuffledDeck.value = shuffle([...majorArcana, ...minorArcana]).slice(0, DISPLAY_COUNT)
 })
 
 const positionLabels = ['过去', '现在', '未来']
@@ -41,10 +41,51 @@ const selectionHint = computed(() => {
   if (remaining <= 0) return '牌已选好，正在揭示...'
   if (props.spreadType === 'three') {
     const posLabel = positionLabels[selectedIndices.value.length]
-    return `请选择代表「${posLabel}」的第 ${selectedIndices.value.length + 1} 张牌（共需 ${totalToSelect.value} 张）`
+    return `请选择代表「${posLabel}」的第 ${selectedIndices.value.length + 1} 张牌`
   }
   return '请凭直觉选择一张牌'
 })
+
+// Fan arc: each card rotated around a distant origin point
+function getFanAngle(index: number): number {
+  const totalSpread = 60 // degrees
+  const n = DISPLAY_COUNT
+  return ((index - (n - 1) / 2) / (n - 1)) * totalSpread
+}
+
+// 3D tilt on mouse move
+function onCardMouseMove(e: MouseEvent, index: number) {
+  const el = cardRefs.value.get(index)
+  if (!el) return
+  hoveredIndex.value = index
+
+  const rect = el.getBoundingClientRect()
+  const x = ((e.clientX - rect.left) / rect.width) * 100
+  const y = ((e.clientY - rect.top) / rect.height) * 100
+
+  // 3D tilt: rotateY follows X, rotateX follows Y (inverted)
+  const rotateY = ((x - 50) / 50) * 18
+  const rotateX = ((y - 50) / 50) * -18
+
+  el.style.setProperty('--tilt-x', `${rotateX}deg`)
+  el.style.setProperty('--tilt-y', `${rotateY}deg`)
+  el.style.setProperty('--shine-x', `${x}%`)
+  el.style.setProperty('--shine-y', `${y}%`)
+}
+
+function onCardMouseLeave(index: number) {
+  const el = cardRefs.value.get(index)
+  if (!el) return
+  hoveredIndex.value = -1
+  el.style.setProperty('--tilt-x', '0deg')
+  el.style.setProperty('--tilt-y', '0deg')
+  el.style.setProperty('--shine-x', '50%')
+  el.style.setProperty('--shine-y', '50%')
+}
+
+function setCardRef(el: any, index: number) {
+  if (el) cardRefs.value.set(index, el)
+}
 
 function selectCard(index: number) {
   if (phase.value !== 'selecting') return
@@ -54,7 +95,6 @@ function selectCard(index: number) {
   selectedIndices.value.push(index)
 
   if (selectedIndices.value.length >= totalToSelect.value) {
-    // All cards selected, reveal after short delay
     setTimeout(() => {
       phase.value = 'revealing'
       const positions: Array<'past' | 'present' | 'future' | undefined> =
@@ -67,108 +107,95 @@ function selectCard(index: number) {
         position: positions[i],
       }))
 
-      // Flip cards one by one
       revealedCards.value.forEach((_, i) => {
         setTimeout(() => {
           revealedCards.value[i] = { ...revealedCards.value[i], isFlipped: true }
-
-          // After last card flipped, emit
           if (i === revealedCards.value.length - 1) {
             setTimeout(() => emit('cards-selected', revealedCards.value), 800)
           }
         }, 600 * (i + 1))
       })
-    }, 500)
+    }, 600)
   }
-}
-
-function getCardAngle(index: number, total: number): number {
-  const spread = Math.min(total * 4, 80) // Max 80 degree spread
-  const step = spread / (total - 1 || 1)
-  return -spread / 2 + step * index
-}
-
-function getCardOffset(index: number, total: number): number {
-  const center = (total - 1) / 2
-  const dist = Math.abs(index - center)
-  return dist * dist * 1.5 // quadratic curve for arc shape
 }
 </script>
 
 <template>
-  <div class="fan-spread">
-    <!-- Selection phase: fan of cards -->
-    <Transition name="fan-scene" mode="out-in">
-      <div v-if="phase === 'selecting'" key="selecting" class="fan-spread__selecting">
-        <h2 class="fan-spread__title">{{ selectionHint }}</h2>
+  <div class="spread">
+    <Transition name="spread-scene" mode="out-in">
+      <!-- ========== SELECTING: Fan of cards ========== -->
+      <div v-if="phase === 'selecting'" key="selecting" class="spread__selecting">
+        <h2 class="spread__title">{{ selectionHint }}</h2>
 
-        <div class="fan-spread__fan-container">
-          <div class="fan-spread__fan">
+        <!-- Fan container -->
+        <div class="fan">
+          <div class="fan__arc">
             <div
               v-for="(card, index) in shuffledDeck"
               :key="index"
-              class="fan-spread__card-wrapper"
+              :ref="(el) => setCardRef(el, index)"
+              class="fan__card-perspective"
               :class="{
-                'fan-spread__card-wrapper--selected': selectedIndices.includes(index),
-                'fan-spread__card-wrapper--disabled': selectedIndices.length >= totalToSelect && !selectedIndices.includes(index),
+                'fan__card-perspective--selected': selectedIndices.includes(index),
+                'fan__card-perspective--disabled': selectedIndices.length >= totalToSelect && !selectedIndices.includes(index),
+                'fan__card-perspective--hovered': hoveredIndex === index,
               }"
               :style="{
-                '--angle': `${getCardAngle(index, shuffledDeck.length)}deg`,
-                '--offset-y': `${getCardOffset(index, shuffledDeck.length)}px`,
-                '--index': index,
+                '--angle': `${getFanAngle(index)}deg`,
+                '--z': index + 1,
+                zIndex: hoveredIndex === index ? 100 : (selectedIndices.includes(index) ? 90 : index + 1),
               }"
+              @mousemove="onCardMouseMove($event, index)"
+              @mouseleave="onCardMouseLeave(index)"
               @click="selectCard(index)"
             >
-              <TarotCardBack />
-              <div v-if="selectedIndices.includes(index)" class="fan-spread__badge">
+              <!-- 3D tilt card -->
+              <div class="fan__card">
+                <TarotCardBack />
+                <!-- Shine overlay -->
+                <div class="fan__shine" />
+              </div>
+              <!-- Selection badge -->
+              <div v-if="selectedIndices.includes(index)" class="fan__badge">
                 {{ selectedIndices.indexOf(index) + 1 }}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Selected cards preview -->
-        <div v-if="selectedIndices.length > 0" class="fan-spread__preview">
+        <!-- Selected slots preview -->
+        <div v-if="selectedIndices.length > 0 || spreadType === 'three'" class="spread__slots">
           <div
             v-for="i in totalToSelect"
             :key="i"
-            class="fan-spread__preview-slot"
-            :class="{ 'fan-spread__preview-slot--filled': i <= selectedIndices.length }"
+            class="spread__slot"
+            :class="{ 'spread__slot--filled': i <= selectedIndices.length }"
           >
-            <span v-if="spreadType === 'three'" class="fan-spread__preview-label">
-              {{ positionLabels[i - 1] }}
-            </span>
-            <span class="fan-spread__preview-number">{{ i <= selectedIndices.length ? '✦' : '?' }}</span>
+            <span v-if="spreadType === 'three'" class="spread__slot-label">{{ positionLabels[i - 1] }}</span>
+            <span class="spread__slot-icon">{{ i <= selectedIndices.length ? '✦' : '?' }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Reveal phase: flip cards -->
-      <div v-else key="revealing" class="fan-spread__revealing">
-        <h2 class="fan-spread__title">命运正在揭示...</h2>
-        <div class="fan-spread__reveal-cards">
+      <!-- ========== REVEALING: Flip cards ========== -->
+      <div v-else key="revealing" class="spread__revealing">
+        <h2 class="spread__title">命运正在揭示...</h2>
+        <div class="reveal__cards">
           <div
             v-for="(drawn, index) in revealedCards"
             :key="index"
-            class="fan-spread__reveal-slot"
+            class="reveal__slot"
           >
-            <div
-              v-if="spreadType === 'three' && drawn.position"
-              class="fan-spread__reveal-label"
-            >
+            <div v-if="spreadType === 'three' && drawn.position" class="reveal__label">
               {{ { past: '过去', present: '现在', future: '未来' }[drawn.position] }}
             </div>
-            <div class="fan-spread__flipper-perspective">
+            <div class="reveal__perspective">
               <div
-                class="fan-spread__flipper"
-                :class="{ 'fan-spread__flipper--flipped': drawn.isFlipped }"
+                class="reveal__flipper"
+                :class="{ 'reveal__flipper--flipped': drawn.isFlipped }"
               >
-                <div class="fan-spread__flip-front">
-                  <TarotCardBack />
-                </div>
-                <div class="fan-spread__flip-back">
-                  <TarotCardFace :card="drawn.card" :is-reversed="drawn.isReversed" />
-                </div>
+                <div class="reveal__front"><TarotCardBack /></div>
+                <div class="reveal__back"><TarotCardFace :card="drawn.card" :is-reversed="drawn.isReversed" /></div>
               </div>
             </div>
           </div>
@@ -179,7 +206,7 @@ function getCardOffset(index: number, total: number): number {
 </template>
 
 <style scoped>
-.fan-spread {
+.spread {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -187,173 +214,212 @@ function getCardOffset(index: number, total: number): number {
   min-height: 500px;
 }
 
-.fan-spread__title {
+.spread__title {
   font-family: var(--font-display);
   color: var(--color-primary);
   font-size: 1.2rem;
   text-align: center;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
   letter-spacing: 0.05em;
 }
 
-/* Fan layout */
-.fan-spread__fan-container {
+/* =============================================
+   FAN ARC LAYOUT
+   ============================================= */
+.fan {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: var(--space-xl) 0;
-  overflow-x: auto;
+  padding: 40px 0 20px;
+  overflow: visible;
 }
 
-.fan-spread__fan {
+.fan__arc {
   position: relative;
-  width: 600px;
-  height: 340px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  width: 120px;  /* all cards stack at center */
+  height: 200px;
 }
 
-.fan-spread__card-wrapper {
+.fan__card-perspective {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 120px;
-  height: 180px;
-  transform-origin: bottom center;
-  transform:
-    translateX(-50%)
-    translateY(calc(var(--offset-y, 0px) * -1))
-    rotate(var(--angle, 0deg));
-  transition: all 0.3s ease;
+  width: 100px;
+  height: 150px;
+  margin-left: -50px;
+  /* THE KEY: pivot far below the card for arc effect */
+  transform-origin: center 500px;
+  transform: rotate(var(--angle, 0deg));
   cursor: pointer;
-  z-index: calc(var(--index, 0));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              filter 0.2s ease;
+  perspective: 600px;
 }
 
-.fan-spread__card-wrapper:hover {
-  transform:
-    translateX(-50%)
-    translateY(calc(var(--offset-y, 0px) * -1 - 30px))
-    rotate(var(--angle, 0deg));
-  z-index: 100;
+/* Hover: lift out of fan */
+.fan__card-perspective--hovered {
+  transform: rotate(var(--angle, 0deg)) translateY(-35px) scale(1.12);
+  filter: brightness(1.1);
 }
 
-.fan-spread__card-wrapper--selected {
-  transform:
-    translateX(-50%)
-    translateY(calc(var(--offset-y, 0px) * -1 - 40px))
-    rotate(var(--angle, 0deg));
-  z-index: 99;
+/* Other cards dim on hover */
+.fan__arc:hover .fan__card-perspective:not(.fan__card-perspective--hovered) {
+  filter: brightness(0.75);
 }
 
-.fan-spread__card-wrapper--selected::after {
+/* Selected cards */
+.fan__card-perspective--selected {
+  transform: rotate(var(--angle, 0deg)) translateY(-45px);
+}
+
+.fan__card-perspective--selected::after {
   content: '';
   position: absolute;
-  inset: -4px;
-  border: 3px solid var(--color-primary);
+  inset: -3px;
+  border: 2px solid var(--color-primary);
   border-radius: 10px;
-  box-shadow: 0 0 16px var(--color-primary);
+  box-shadow: 0 0 18px var(--color-primary);
+  pointer-events: none;
+  animation: selectedPulse 2s infinite;
+}
+
+@keyframes selectedPulse {
+  0%, 100% { box-shadow: 0 0 12px var(--color-primary); }
+  50% { box-shadow: 0 0 24px var(--color-primary); }
+}
+
+.fan__card-perspective--disabled {
+  opacity: 0.35;
+  cursor: default;
   pointer-events: none;
 }
 
-.fan-spread__card-wrapper--disabled {
-  opacity: 0.4;
-  cursor: default;
+/* 3D tilt inner card */
+.fan__card {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 0.1s ease-out;
+  border-radius: var(--border-radius-lg, 10px);
+  overflow: hidden;
+  position: relative;
 }
 
-.fan-spread__card-wrapper--disabled:hover {
-  transform:
-    translateX(-50%)
-    translateY(calc(var(--offset-y, 0px) * -1))
-    rotate(var(--angle, 0deg));
-  z-index: calc(var(--index, 0));
-}
-
-.fan-spread__card-wrapper :deep(.card-back) {
-  width: 120px;
-  height: 180px;
-}
-
-.fan-spread__badge {
+/* Shine / glare overlay */
+.fan__shine {
   position: absolute;
-  top: -12px;
-  right: -8px;
-  width: 28px;
-  height: 28px;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    circle at var(--shine-x, 50%) var(--shine-y, 50%),
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 70%
+  );
+  mix-blend-mode: overlay;
+}
+
+.fan__card-perspective--hovered .fan__shine {
+  opacity: 1;
+}
+
+/* Selection badge */
+.fan__badge {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--color-primary);
-  color: var(--color-bg);
-  font-weight: 700;
-  font-size: 0.85rem;
+  color: var(--color-bg, #1a0a2e);
+  font-weight: 800;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
   z-index: 200;
+  animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Preview of selected slots */
-.fan-spread__preview {
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+/* =============================================
+   SELECTED SLOTS PREVIEW
+   ============================================= */
+.spread__slots {
   display: flex;
   gap: var(--space-lg);
   margin-top: var(--space-xl);
 }
 
-.fan-spread__preview-slot {
+.spread__slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.fan-spread__preview-label {
+.spread__slot-label {
   font-family: var(--font-display);
   font-size: 0.85rem;
   color: var(--color-text-muted);
 }
 
-.fan-spread__preview-number {
-  width: 40px;
-  height: 40px;
+.spread__slot-icon {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px dashed var(--color-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
   transition: all 0.3s ease;
 }
 
-.fan-spread__preview-slot--filled .fan-spread__preview-number {
+.spread__slot--filled .spread__slot-icon {
   border-style: solid;
   border-color: var(--color-primary);
   color: var(--color-primary);
-  background: rgba(201, 168, 76, 0.1);
+  background: rgba(201, 168, 76, 0.15);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.3);
 }
 
-/* Reveal phase */
-.fan-spread__revealing {
+/* =============================================
+   REVEAL PHASE
+   ============================================= */
+.spread__revealing {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.fan-spread__reveal-cards {
+.reveal__cards {
   display: flex;
   justify-content: center;
   gap: var(--space-xl);
   flex-wrap: wrap;
 }
 
-.fan-spread__reveal-slot {
+.reveal__slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-md);
 }
 
-.fan-spread__reveal-label {
+.reveal__label {
   font-family: var(--font-display);
   font-size: 1rem;
   color: var(--color-primary);
@@ -361,14 +427,13 @@ function getCardOffset(index: number, total: number): number {
   letter-spacing: 0.1em;
 }
 
-/* Flip animation - perspective on parent */
-.fan-spread__flipper-perspective {
+.reveal__perspective {
   perspective: 1000px;
-  width: 200px;
-  height: 300px;
+  width: 180px;
+  height: 270px;
 }
 
-.fan-spread__flipper {
+.reveal__flipper {
   width: 100%;
   height: 100%;
   position: relative;
@@ -376,83 +441,75 @@ function getCardOffset(index: number, total: number): number {
   transition: transform 0.8s ease;
 }
 
-.fan-spread__flipper--flipped {
+.reveal__flipper--flipped {
   transform: rotateY(180deg);
 }
 
-.fan-spread__flip-front,
-.fan-spread__flip-back {
+.reveal__front,
+.reveal__back {
   position: absolute;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
 }
 
-.fan-spread__flip-front {
-  transform: rotateY(0deg);
-}
-
-.fan-spread__flip-back {
+.reveal__back {
   transform: rotateY(180deg);
 }
 
-/* Scene transition */
-.fan-scene-enter-active,
-.fan-scene-leave-active {
+/* =============================================
+   TRANSITIONS
+   ============================================= */
+.spread-scene-enter-active,
+.spread-scene-leave-active {
   transition: opacity 0.4s ease;
 }
 
-.fan-scene-enter-from,
-.fan-scene-leave-to {
+.spread-scene-enter-from,
+.spread-scene-leave-to {
   opacity: 0;
 }
 
-/* Mobile */
+/* =============================================
+   RESPONSIVE
+   ============================================= */
 @media (max-width: 768px) {
-  .fan-spread__fan {
-    width: 100%;
-    max-width: 500px;
-    height: 280px;
+  .fan__card-perspective {
+    width: 80px;
+    height: 120px;
+    margin-left: -40px;
+    transform-origin: center 400px;
   }
 
-  .fan-spread__card-wrapper {
-    width: 90px;
-    height: 135px;
+  .fan__arc {
+    height: 160px;
   }
 
-  .fan-spread__card-wrapper :deep(.card-back) {
-    width: 90px;
-    height: 135px;
-  }
-
-  .fan-spread__flipper-perspective {
-    width: 160px;
-    height: 240px;
+  .reveal__perspective {
+    width: 150px;
+    height: 225px;
   }
 }
 
 @media (max-width: 480px) {
-  .fan-spread__fan {
-    height: 240px;
+  .fan__card-perspective {
+    width: 60px;
+    height: 90px;
+    margin-left: -30px;
+    transform-origin: center 320px;
   }
 
-  .fan-spread__card-wrapper {
-    width: 70px;
-    height: 105px;
+  .fan__arc {
+    height: 130px;
   }
 
-  .fan-spread__card-wrapper :deep(.card-back) {
-    width: 70px;
-    height: 105px;
+  .reveal__perspective {
+    width: 130px;
+    height: 195px;
   }
 
-  .fan-spread__reveal-cards {
+  .reveal__cards {
     gap: var(--space-md);
-  }
-
-  .fan-spread__flipper-perspective {
-    width: 140px;
-    height: 210px;
   }
 }
 </style>
