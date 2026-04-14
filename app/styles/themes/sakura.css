@@ -1,0 +1,47 @@
+/* ============================================
+   Theme: Sakura — Cardcaptor Sakura
+   ============================================ */
+
+[data-theme="sakura"] {
+  --color-bg: #FFF0F5;
+  --color-bg-gradient: linear-gradient(135deg, #FFF0F5 0%, #FFF5F8 50%, #FFF8F0 100%);
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #FFF0F5;
+  --color-surface-alt: #FBE8F0;
+
+  --color-primary: #F4A6C0;
+  --color-primary-hover: #F08DAE;
+  --color-primary-light: rgba(244, 166, 192, 0.2);
+  --color-secondary: #C3A6D8;
+  --color-accent: #F5D76E;
+
+  --color-text: #4A2040;
+  --color-text-muted: #9B7090;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: rgba(244, 166, 192, 0.4);
+  --color-border-strong: rgba(244, 166, 192, 0.7);
+
+  --color-card-bg: #FFFEF5;
+  --color-card-border: rgba(245, 215, 110, 0.6);
+  --color-card-back: linear-gradient(135deg, #F4A6C0, #C3A6D8);
+  --color-card-glow: rgba(245, 215, 110, 0.3);
+
+  --color-error: #E8607A;
+  --color-success: #7BC67E;
+
+  --border-radius-sm: 8px;
+  --border-radius-md: 14px;
+  --border-radius-lg: 18px;
+  --border-radius-xl: 24px;
+  --border-radius-round: 9999px;
+
+  --font-display: 'Playfair Display', 'Noto Serif SC', serif;
+  --font-body: 'Quicksand', 'Noto Sans SC', sans-serif;
+
+  --card-width: 140px;
+  --card-height: 240px;
+
+  --shadow-card: 0 4px 16px rgba(244, 166, 192, 0.2), 0 0 12px rgba(245, 215, 110, 0.15);
+  --shadow-card-hover: 0 8px 24px rgba(244, 166, 192, 0.3), 0 0 20px rgba(245, 215, 110, 0.25);
+}
