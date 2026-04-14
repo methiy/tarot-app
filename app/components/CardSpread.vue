@@ -258,7 +258,7 @@ function selectCard(index: number) {
 
 /* Hover: lift out of fan */
 .fan__card-perspective--hovered {
-  transform: rotate(var(--angle, 0deg)) translateY(-35px) scale(1.12);
+  transform: rotate(var(--angle, 0deg)) translateY(-15px) scale(1.06);
   filter: brightness(1.1);
 }
 
@@ -269,7 +269,7 @@ function selectCard(index: number) {
 
 /* Selected cards */
 .fan__card-perspective--selected {
-  transform: rotate(var(--angle, 0deg)) translateY(-45px);
+  transform: rotate(var(--angle, 0deg)) translateY(-22px);
 }
 
 .fan__card-perspective--selected::after {
