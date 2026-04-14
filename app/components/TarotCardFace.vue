@@ -58,8 +58,8 @@ const keywords = computed(() => {
 
 <style scoped>
 .card-face {
-  width: 200px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
   border-radius: var(--border-radius-lg);
   background: var(--color-card-bg);
   border: 2px solid var(--color-card-border);

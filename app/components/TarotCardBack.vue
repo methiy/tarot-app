@@ -39,8 +39,8 @@ const { currentTheme } = useTheme()
 
 <style scoped>
 .card-back {
-  width: 200px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-card, var(--shadow-lg));
   cursor: pointer;

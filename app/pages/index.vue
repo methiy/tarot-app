@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { DrawnCard } from '~/types'
+
 type Scene = 'input' | 'drawing' | 'result'
 
 const scene = ref<Scene>('input')
@@ -6,24 +8,25 @@ const birthday = ref('')
 const gender = ref('')
 const question = ref('')
 const spreadTypeChoice = ref<'single' | 'three'>('single')
-
-const { spread, spreadType, drawCards, reset: resetTarot } = useTarot()
+const selectedCards = ref<DrawnCard[]>([])
 
 function handleFormSubmit(payload: { birthday: string; gender: string; question: string; spreadType: 'single' | 'three' }) {
   birthday.value = payload.birthday
   gender.value = payload.gender
   question.value = payload.question
   spreadTypeChoice.value = payload.spreadType
-  drawCards(payload.spreadType)
   scene.value = 'drawing'
 }
 
-function handleAllFlipped() {
-  scene.value = 'result'
+function handleCardsSelected(cards: DrawnCard[]) {
+  selectedCards.value = cards
+  setTimeout(() => {
+    scene.value = 'result'
+  }, 500)
 }
 
 function handleRestart() {
-  resetTarot()
+  selectedCards.value = []
   birthday.value = ''
   gender.value = ''
   question.value = ''
@@ -49,16 +52,15 @@ function handleRestart() {
 
         <div v-else-if="scene === 'drawing'" key="drawing" class="scene">
           <CardSpread
-            :spread="spread"
-            :spread-type="spreadType"
-            @all-flipped="handleAllFlipped"
+            :spread-type="spreadTypeChoice"
+            @cards-selected="handleCardsSelected"
           />
         </div>
 
         <div v-else key="result" class="scene">
           <ReadingResult
-            :spread="spread"
-            :spread-type="spreadType"
+            :spread="selectedCards"
+            :spread-type="spreadTypeChoice"
             :birthday="birthday"
             :gender="gender"
             :question="question"
@@ -112,7 +114,6 @@ function handleRestart() {
   width: 100%;
 }
 
-/* Scene transitions */
 .scene-enter-active,
 .scene-leave-active {
   transition: opacity 0.4s ease, transform 0.4s ease;
