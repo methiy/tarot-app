@@ -4,7 +4,6 @@ const { currentTheme, setTheme } = useTheme()
 const themes = [
   { id: 'mystic' as const, emoji: '\u{1F52E}', label: '神秘塔罗', color: '#2d1b4e' },
   { id: 'sakura' as const, emoji: '\u{1F338}', label: '百变小樱', color: '#F4A6C0' },
-  { id: 'capybara' as const, emoji: '\u{1FAE7}', label: '水豚噜噜', color: '#F5C87A' },
 ]
 </script>
 

@@ -15,7 +15,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Varela+Round&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Serif+SC:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap',
         },
       ],
     },
@@ -24,6 +24,5 @@ export default defineNuxtConfig({
     '~/styles/global.css',
     '~/styles/themes/mystic.css',
     '~/styles/themes/sakura.css',
-    '~/styles/themes/capybara.css',
   ],
 })

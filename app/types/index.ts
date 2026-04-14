@@ -4,7 +4,7 @@ import type { ZodiacSign } from '~/data/zodiac'
 export type { TarotCard }
 export type { ZodiacSign }
 
-export type ThemeName = 'mystic' | 'sakura' | 'capybara'
+export type ThemeName = 'mystic' | 'sakura'
 
 export type QuestionCategory = 'love' | 'career' | 'wealth' | 'health' | 'general'
 

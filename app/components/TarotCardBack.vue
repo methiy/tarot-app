@@ -127,56 +127,6 @@ const { currentTheme } = useTheme()
             <path d="M14 50 L14.5 49 L15 50 L14.5 51 Z" fill="#edb458" opacity="0.5" />
             <path d="M86 50 L86.5 49 L87 50 L86.5 51 Z" fill="#edb458" opacity="0.5" />
           </svg>
-
-          <!-- ======= CAPYBARA: 水豚噜噜 ======= -->
-          <svg
-            v-else
-            viewBox="0 0 120 120"
-            class="card-back__svg card-back__svg--capybara"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <!-- Body: mango-shaped round blob -->
-            <ellipse cx="60" cy="68" rx="34" ry="32" fill="#e0b06f" />
-            <!-- Belly lighter area -->
-            <ellipse cx="60" cy="74" rx="22" ry="18" fill="#f0d0a0" opacity="0.5" />
-            <!-- Head: big round, slightly overlapping body -->
-            <ellipse cx="60" cy="45" rx="28" ry="25" fill="#e0b06f" />
-            <!-- Left ear: small round nub -->
-            <ellipse cx="37" cy="26" rx="7" ry="5.5" fill="#e0b06f" />
-            <ellipse cx="37" cy="26" rx="4" ry="3" fill="#f0a0a0" opacity="0.6" />
-            <!-- Right ear -->
-            <ellipse cx="83" cy="26" rx="7" ry="5.5" fill="#e0b06f" />
-            <ellipse cx="83" cy="26" rx="4" ry="3" fill="#f0a0a0" opacity="0.6" />
-            <!-- Left eye: small round bean eye -->
-            <circle cx="48" cy="42" r="3.5" fill="#2a1a10" />
-            <circle cx="49.2" cy="40.8" r="1.3" fill="white" />
-            <!-- Right eye -->
-            <circle cx="72" cy="42" r="3.5" fill="#2a1a10" />
-            <circle cx="73.2" cy="40.8" r="1.3" fill="white" />
-            <!-- Nose/muzzle bump -->
-            <ellipse cx="60" cy="54" rx="14" ry="9" fill="#d8a860" />
-            <!-- Nose pad -->
-            <ellipse cx="60" cy="51" rx="4.5" ry="2.8" fill="#6b4030" />
-            <ellipse cx="61" cy="50.5" rx="1.5" ry="0.8" fill="#8b6050" opacity="0.5" />
-            <!-- 漏齿笑: the signature open-mouth toothy grin -->
-            <path d="M52 57 Q56 54 60 56 Q64 54 68 57" fill="none" stroke="#6b4030" stroke-width="1.2" stroke-linecap="round" />
-            <!-- Open mouth -->
-            <ellipse cx="60" cy="59" rx="6" ry="4" fill="#c06050" />
-            <!-- Two front teeth -->
-            <rect x="57" y="56.5" width="2.8" height="3.5" rx="1" fill="white" />
-            <rect x="60.2" y="56.5" width="2.8" height="3.5" rx="1" fill="white" />
-            <!-- Blush: big pink circles on cheeks -->
-            <circle cx="40" cy="52" r="6.5" fill="#f0a0a0" opacity="0.4" />
-            <circle cx="80" cy="52" r="6.5" fill="#f0a0a0" opacity="0.4" />
-            <!-- Short stubby arms -->
-            <ellipse cx="32" cy="72" rx="6" ry="4" fill="#d8a560" transform="rotate(-20 32 72)" />
-            <ellipse cx="88" cy="72" rx="6" ry="4" fill="#d8a560" transform="rotate(20 88 72)" />
-            <!-- Short stubby feet -->
-            <ellipse cx="45" cy="96" rx="7" ry="4" fill="#d8a560" />
-            <ellipse cx="75" cy="96" rx="7" ry="4" fill="#d8a560" />
-            <!-- Small heart decoration above head -->
-            <path d="M57 16 Q57 12 60 14 Q63 12 63 16 Q63 19 60 21 Q57 19 57 16Z" fill="#f0a0a0" opacity="0.7" />
-          </svg>
         </div>
       </div>
     </div>
@@ -437,52 +387,4 @@ const { currentTheme } = useTheme()
   filter: drop-shadow(0 0 6px rgba(237, 180, 88, 0.25));
 }
 
-/* ============================================================
-   THEME 3: CAPYBARA — Warm tones, polka dots, kawaii face
-   ============================================================ */
-.card-back--capybara {
-  background: linear-gradient(160deg, #e8c07a 0%, #ddb068 50%, #d4a055 100%);
-  box-shadow:
-    inset 0 0 0 4px #c08840,
-    inset 0 0 0 6px rgba(255, 255, 255, 0.18),
-    0 4px 18px rgba(120, 80, 40, 0.25),
-    0 2px 8px rgba(120, 80, 40, 0.15);
-}
-
-.card-back--capybara:hover {
-  box-shadow:
-    inset 0 0 0 4px #c08840,
-    inset 0 0 0 6px rgba(255, 255, 255, 0.25),
-    0 8px 28px rgba(120, 80, 40, 0.35),
-    0 4px 12px rgba(120, 80, 40, 0.2);
-}
-
-/* Polka dot pattern + scattered hearts */
-.card-back--capybara .card-back__pattern {
-  background:
-    radial-gradient(circle 3px at 12px 12px, rgba(240, 160, 160, 0.18) 2.5px, transparent 3px),
-    radial-gradient(circle 3px at 32px 32px, rgba(240, 160, 160, 0.18) 2.5px, transparent 3px),
-    radial-gradient(circle 2px at 22px 6px, rgba(255, 255, 255, 0.2) 1.5px, transparent 2px),
-    radial-gradient(circle 2px at 6px 28px, rgba(255, 255, 255, 0.2) 1.5px, transparent 2px);
-  background-size: 40px 40px;
-}
-
-.card-back--capybara .card-back__inner-frame {
-  border: 2px dashed rgba(139, 99, 64, 0.22);
-  border-radius: 10px;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 65%);
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.06);
-}
-
-/* Rounded dot corners for kawaii feel */
-.card-back--capybara .card-back__corner {
-  width: 8px;
-  height: 8px;
-  background: rgba(192, 136, 64, 0.35);
-  border-radius: 50%;
-}
-
-.card-back__svg--capybara {
-  filter: drop-shadow(0 2px 5px rgba(92, 58, 40, 0.22));
-}
 </style>
