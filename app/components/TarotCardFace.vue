@@ -18,32 +18,12 @@ const suitSymbols: Record<string, string> = {
   wands: '♣',
 }
 
-const majorArcanaSymbols: Record<number, string> = {
-  0: '🌀', 1: '♾️', 2: '🌙', 3: '👑', 4: '🏛️', 5: '🔑', 6: '❤️', 7: '⭐',
-  8: '🦁', 9: '🏮', 10: '☸️', 11: '⚖️', 12: '🔻', 13: '💀', 14: '🏺',
-  15: '😈', 16: '⚡', 17: '✨', 18: '🌕', 19: '☀️', 20: '🎺', 21: '🌍',
-}
-
-const minorSuitSymbols: Record<string, string> = {
-  wands: '🔥',
-  cups: '💧',
-  swords: '⚔️',
-  pentacles: '⭐',
-}
-
 const displayNumber = computed(() => {
   if (props.card.arcana === 'major') {
     return romanNumerals[props.card.number] ?? String(props.card.number)
   }
   const suit = suitSymbols[props.card.suit!] ?? ''
   return `${props.card.number} ${suit}`
-})
-
-const centralSymbol = computed(() => {
-  if (props.card.arcana === 'major') {
-    return majorArcanaSymbols[props.card.number] ?? '🔮'
-  }
-  return minorSuitSymbols[props.card.suit!] ?? '🔮'
 })
 
 const keywords = computed(() => {
@@ -180,9 +160,9 @@ const keywords = computed(() => {
         <span class="card-face__sep-dot">✦</span>
       </div>
 
-      <!-- Central symbol -->
+      <!-- Central illustration -->
       <div class="card-face__symbol-wrap">
-        <div class="card-face__symbol">{{ centralSymbol }}</div>
+        <CardIllustration :card-id="card.id" :suit="card.suit" />
       </div>
 
       <!-- Card name -->
@@ -321,36 +301,17 @@ const keywords = computed(() => {
   flex-shrink: 0;
 }
 
-/* ── Central symbol ── */
+/* ── Central illustration ── */
 .card-face__symbol-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-grow: 1;
   position: relative;
-}
-
-.card-face__symbol-wrap::before {
-  content: '';
-  position: absolute;
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    var(--color-primary-light) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
-}
-
-.card-face__symbol {
-  font-size: 3.2rem;
-  line-height: 1;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25))
-          drop-shadow(0 0 12px var(--color-card-glow));
-  position: relative;
-  z-index: 1;
+  width: 80%;
+  min-height: 0;
+  max-height: 45%;
 }
 
 /* ── Card name ── */
